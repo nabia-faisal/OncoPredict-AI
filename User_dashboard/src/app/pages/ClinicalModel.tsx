@@ -1,65 +1,40 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useApp } from "../context/AppContext";
-import { Button } from "../components/ui/button";
-import { Label } from "../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Card } from "../components/ui/card";
-import { ArrowLeft } from "lucide-react";
 import { predictClinical } from "../api";
 
 export default function ClinicalModel() {
   const navigate = useNavigate();
-  const { addPrediction, setCurrentPrediction, patientHistory } = useApp();
+  const { addPrediction, patientHistory } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    age: "",
-    menopause: "",
-    tumorSize: "",
-    invNodes: "",
-    nodeCaps: "",
-    degMalig: "",
-    breast: "",
-    breastQuad: "",
-    irradiat: "",
+    age: "", menopause: "", tumorSize: "", invNodes: "",
+    nodeCaps: "", degMalig: "", breast: "", breastQuad: "", irradiat: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const result = await predictClinical({
-        age: formData.age,
-        menopause: formData.menopause,
-        tumor_size: formData.tumorSize,
-        inv_nodes: formData.invNodes,
-        node_caps: formData.nodeCaps,
-        deg_malig: formData.degMalig,
-        breast: formData.breast,
-        breast_quad: formData.breastQuad,
+        age: formData.age, menopause: formData.menopause,
+        tumor_size: formData.tumorSize, inv_nodes: formData.invNodes,
+        node_caps: formData.nodeCaps, deg_malig: formData.degMalig,
+        breast: formData.breast, breast_quad: formData.breastQuad,
         irradiat: formData.irradiat,
       });
-
-      const riskLevel =
-        result.confidence > 70 ? "High" :
-        result.confidence > 40 ? "Moderate" : "Low";
-
-      const prediction = {
-        id: Date.now().toString(),
+      const riskLevel = result.confidence > 70 ? "High" : result.confidence > 40 ? "Moderate" : "Low";
+      await addPrediction({
         date: new Date().toLocaleDateString(),
-        type: "Clinical" as const,
+        type: "Clinical",
         patientName: patientHistory?.patientName || "Unknown",
         result: result.prediction,
         confidence: Math.round(result.confidence),
         riskLevel: riskLevel as "Low" | "Moderate" | "High",
-      };
-
-      addPrediction(prediction);
-      setCurrentPrediction(prediction);
+      });
       navigate("/dashboard/result");
     } catch (err: any) {
       setError(err.message || "Something went wrong. Is the backend running?");
@@ -68,207 +43,137 @@ export default function ClinicalModel() {
     }
   };
 
-  const handleReset = () => {
-    setFormData({
-      age: "",
-      menopause: "",
-      tumorSize: "",
-      invNodes: "",
-      nodeCaps: "",
-      degMalig: "",
-      breast: "",
-      breastQuad: "",
-      irradiat: "",
-    });
-    setError("");
-  };
+  const set = (field: string) => (e: React.ChangeEvent<HTMLSelectElement>) =>
+    setFormData({ ...formData, [field]: e.target.value });
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button onClick={() => navigate("/dashboard/model-selection")} variant="outline" className="rounded-lg">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <h1 className="text-2xl font-semibold text-slate-800">Clinical Model - Patient Data</h1>
+    <div className="container py-4">
+      <div className="d-flex align-items-center gap-3 mb-4">
+        <button className="btn btn-outline-secondary btn-sm" onClick={() => navigate("/dashboard/model-selection")}>
+          ← Back
+        </button>
+        <h2 className="fw-bold mb-0">Clinical Model — Patient Data</h2>
       </div>
 
-      <Card className="p-8 bg-white border-slate-200">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-4">
+
           {patientHistory && (
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-6">
-              <p className="text-sm text-blue-700">
-                <span className="font-semibold">Patient:</span> {patientHistory.patientName} |{" "}
-                <span className="font-semibold">Age:</span> {patientHistory.age}
-              </p>
+            <div className="alert alert-info mb-4">
+              <strong>Patient:</strong> {patientHistory.patientName} &nbsp;|&nbsp;
+              <strong>Age:</strong> {patientHistory.age}
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-              <p className="text-sm text-red-700">⚠️ {error}</p>
-            </div>
+            <div className="alert alert-danger">⚠️ {error}</div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Age Range</Label>
-              <Select value={formData.age} onValueChange={(value) => setFormData({ ...formData, age: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select age range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="20-29">20-29</SelectItem>
-                  <SelectItem value="30-39">30-39</SelectItem>
-                  <SelectItem value="40-49">40-49</SelectItem>
-                  <SelectItem value="50-59">50-59</SelectItem>
-                  <SelectItem value="60-69">60-69</SelectItem>
-                  <SelectItem value="70-79">70-79</SelectItem>
-                </SelectContent>
-              </Select>
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3 mb-4">
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Age Range</label>
+                <select className="form-select" value={formData.age} onChange={set("age")} required>
+                  <option value="">Select age range</option>
+                  {["20-29","30-39","40-49","50-59","60-69","70-79"].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Menopause Status</label>
+                <select className="form-select" value={formData.menopause} onChange={set("menopause")} required>
+                  <option value="">Select status</option>
+                  <option value="lt40">Less than 40</option>
+                  <option value="ge40">Greater or equal 40</option>
+                  <option value="premeno">Premenopausal</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Tumor Size (mm)</label>
+                <select className="form-select" value={formData.tumorSize} onChange={set("tumorSize")} required>
+                  <option value="">Select size</option>
+                  {["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59"].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Invasive Nodes</label>
+                <select className="form-select" value={formData.invNodes} onChange={set("invNodes")} required>
+                  <option value="">Select number</option>
+                  {["0-2","3-5","6-8","9-11","12-14","15-17","18-20","21-23","24-26"].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Node Caps</label>
+                <select className="form-select" value={formData.nodeCaps} onChange={set("nodeCaps")} required>
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Degree of Malignancy</label>
+                <select className="form-select" value={formData.degMalig} onChange={set("degMalig")} required>
+                  <option value="">Select grade</option>
+                  <option value="1">Grade 1</option>
+                  <option value="2">Grade 2</option>
+                  <option value="3">Grade 3</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Breast</label>
+                <select className="form-select" value={formData.breast} onChange={set("breast")} required>
+                  <option value="">Select</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Breast Quadrant</label>
+                <select className="form-select" value={formData.breastQuad} onChange={set("breastQuad")} required>
+                  <option value="">Select quadrant</option>
+                  <option value="left_up">Left Upper</option>
+                  <option value="left_low">Left Lower</option>
+                  <option value="right_up">Right Upper</option>
+                  <option value="right_low">Right Lower</option>
+                  <option value="central">Central</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Irradiation</label>
+                <select className="form-select" value={formData.irradiat} onChange={set("irradiat")} required>
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+
             </div>
 
-            <div className="space-y-2">
-              <Label>Menopause Status</Label>
-              <Select value={formData.menopause} onValueChange={(value) => setFormData({ ...formData, menopause: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lt40">Less than 40</SelectItem>
-                  <SelectItem value="ge40">Greater or equal 40</SelectItem>
-                  <SelectItem value="premeno">Premenopausal</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="d-flex gap-3">
+              <button type="submit" className="btn btn-primary flex-grow-1" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Analyzing...
+                  </>
+                ) : "Run Prediction"}
+              </button>
+              <button type="button" className="btn btn-outline-secondary flex-grow-1"
+                onClick={() => setFormData({ age:"", menopause:"", tumorSize:"", invNodes:"", nodeCaps:"", degMalig:"", breast:"", breastQuad:"", irradiat:"" })}>
+                Reset
+              </button>
             </div>
-
-            <div className="space-y-2">
-              <Label>Tumor Size (mm)</Label>
-              <Select value={formData.tumorSize} onValueChange={(value) => setFormData({ ...formData, tumorSize: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0-4">0-4</SelectItem>
-                  <SelectItem value="5-9">5-9</SelectItem>
-                  <SelectItem value="10-14">10-14</SelectItem>
-                  <SelectItem value="15-19">15-19</SelectItem>
-                  <SelectItem value="20-24">20-24</SelectItem>
-                  <SelectItem value="25-29">25-29</SelectItem>
-                  <SelectItem value="30-34">30-34</SelectItem>
-                  <SelectItem value="35-39">35-39</SelectItem>
-                  <SelectItem value="40-44">40-44</SelectItem>
-                  <SelectItem value="45-49">45-49</SelectItem>
-                  <SelectItem value="50-54">50-54</SelectItem>
-                  <SelectItem value="55-59">55-59</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Invasive Nodes</Label>
-              <Select value={formData.invNodes} onValueChange={(value) => setFormData({ ...formData, invNodes: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select number" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0-2">0-2</SelectItem>
-                  <SelectItem value="3-5">3-5</SelectItem>
-                  <SelectItem value="6-8">6-8</SelectItem>
-                  <SelectItem value="9-11">9-11</SelectItem>
-                  <SelectItem value="12-14">12-14</SelectItem>
-                  <SelectItem value="15-17">15-17</SelectItem>
-                  <SelectItem value="18-20">18-20</SelectItem>
-                  <SelectItem value="21-23">21-23</SelectItem>
-                  <SelectItem value="24-26">24-26</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Node Caps</Label>
-              <Select value={formData.nodeCaps} onValueChange={(value) => setFormData({ ...formData, nodeCaps: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Degree of Malignancy</Label>
-              <Select value={formData.degMalig} onValueChange={(value) => setFormData({ ...formData, degMalig: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Grade 1</SelectItem>
-                  <SelectItem value="2">Grade 2</SelectItem>
-                  <SelectItem value="3">Grade 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Breast</Label>
-              <Select value={formData.breast} onValueChange={(value) => setFormData({ ...formData, breast: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Breast Quadrant</Label>
-              <Select value={formData.breastQuad} onValueChange={(value) => setFormData({ ...formData, breastQuad: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select quadrant" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left_up">Left Upper</SelectItem>
-                  <SelectItem value="left_low">Left Lower</SelectItem>
-                  <SelectItem value="right_up">Right Upper</SelectItem>
-                  <SelectItem value="right_low">Right Lower</SelectItem>
-                  <SelectItem value="central">Central</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Irradiation</Label>
-              <Select value={formData.irradiat} onValueChange={(value) => setFormData({ ...formData, irradiat: value })} required>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 rounded-lg"
-            >
-              {loading ? "Analyzing..." : "Predict"}
-            </Button>
-            <Button type="button" onClick={handleReset} variant="outline" className="flex-1 rounded-lg">
-              Reset
-            </Button>
-          </div>
-        </form>
-      </Card>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

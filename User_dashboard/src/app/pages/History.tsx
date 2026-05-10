@@ -1,113 +1,112 @@
 import { useNavigate } from "react-router";
 import { useApp } from "../context/AppContext";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
-import { ArrowLeft, Calendar, FileText, ImageIcon, Layers } from "lucide-react";
-import { Badge } from "../components/ui/badge";
 
 export default function History() {
   const navigate = useNavigate();
   const { predictions } = useApp();
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "Clinical":
-        return FileText;
-      case "Image":
-        return ImageIcon;
-      case "Combined":
-        return Layers;
-      default:
-        return FileText;
+  const getRiskBadge = (risk: string) => {
+    switch (risk) {
+      case "Low": return "success";
+      case "Moderate": return "warning";
+      case "High": return "danger";
+      default: return "secondary";
     }
   };
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case "Low":
-        return "bg-green-100 text-green-700 border-green-200";
-      case "Moderate":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "High":
-        return "bg-red-100 text-red-700 border-red-200";
-      default:
-        return "bg-slate-100 text-slate-700 border-slate-200";
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "Clinical": return "📋";
+      case "Image": return "🖼️";
+      case "Combined": return "🔗";
+      default: return "📄";
     }
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button onClick={() => navigate("/dashboard")} variant="outline" className="rounded-lg">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-semibold text-slate-800">Prediction History</h1>
+    <div className="container py-4">
+
+      {/* Header */}
+      <div className="d-flex align-items-center justify-content-between mb-4">
+        <div className="d-flex align-items-center gap-3">
+          <button className="btn btn-outline-secondary btn-sm" onClick={() => navigate("/dashboard")}>
+            ← Back
+          </button>
+          <h2 className="fw-bold mb-0">Prediction History</h2>
         </div>
-        <Badge variant="outline" className="text-sm">
+        <span className="badge bg-primary fs-6">
           {predictions.length} {predictions.length === 1 ? "Record" : "Records"}
-        </Badge>
+        </span>
       </div>
 
       {predictions.length === 0 ? (
-        <Card className="p-12 bg-white border-slate-200 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-              <Calendar className="w-8 h-8 text-slate-400" />
-            </div>
+        /* Empty state */
+        <div className="card border-0 shadow-sm text-center p-5">
+          <div className="display-1 mb-3">📭</div>
+          <h4 className="fw-semibold">No Predictions Yet</h4>
+          <p className="text-muted">Start making predictions to see your history here.</p>
+          <div className="mt-3">
+            <button
+              className="btn btn-primary px-4"
+              onClick={() => navigate("/dashboard/new-prediction")}
+            >
+              New Prediction
+            </button>
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">No Predictions Yet</h3>
-          <p className="text-slate-600 mb-6">Start making predictions to see your history here</p>
-          <Button
-            onClick={() => navigate("/dashboard/new-prediction")}
-            className="bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 rounded-lg"
-          >
-            New Prediction
-          </Button>
-        </Card>
+        </div>
       ) : (
-        <div className="space-y-4">
-          {predictions.map((prediction) => {
-            const TypeIcon = getTypeIcon(prediction.type);
-            return (
-              <Card key={prediction.id} className="p-6 bg-white border-slate-200 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-4 flex-1">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <TypeIcon className="w-6 h-6 text-blue-600" />
+        /* Prediction list */
+        <div className="row g-3">
+          {predictions.map((prediction) => (
+            <div className="col-12" key={prediction.id}>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="row align-items-center">
+                    <div className="col-auto">
+                      <span className="display-6">{getTypeIcon(prediction.type)}</span>
                     </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-slate-800">{prediction.result}</h3>
-                        <Badge className={getRiskColor(prediction.riskLevel)}>{prediction.riskLevel} Risk</Badge>
+                    <div className="col">
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <h5 className="fw-semibold mb-0">{prediction.result}</h5>
+                        <span className={`badge bg-${getRiskBadge(prediction.riskLevel)}`}>
+                          {prediction.riskLevel} Risk
+                        </span>
+                        <span className="badge bg-secondary">{prediction.type}</span>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <p className="text-slate-500">Date</p>
-                          <p className="text-slate-700 font-medium">{prediction.date}</p>
+                      <div className="row g-3 text-sm">
+                        <div className="col-auto">
+                          <small className="text-muted">Date: </small>
+                          <small className="fw-medium">{prediction.date}</small>
                         </div>
-                        <div>
-                          <p className="text-slate-500">Model Type</p>
-                          <p className="text-slate-700 font-medium">{prediction.type}</p>
-                        </div>
-                        <div>
-                          <p className="text-slate-500">Confidence</p>
-                          <p className="text-slate-700 font-medium">{prediction.confidence}%</p>
+                        <div className="col-auto">
+                          <small className="text-muted">Confidence: </small>
+                          <small className="fw-medium">{prediction.confidence}%</small>
                         </div>
                         {prediction.patientName && (
-                          <div>
-                            <p className="text-slate-500">Patient</p>
-                            <p className="text-slate-700 font-medium">{prediction.patientName}</p>
+                          <div className="col-auto">
+                            <small className="text-muted">Patient: </small>
+                            <small className="fw-medium">{prediction.patientName}</small>
                           </div>
                         )}
                       </div>
                     </div>
+                    <div className="col-auto">
+                      {/* Confidence progress bar */}
+                      <div style={{ width: "120px" }}>
+                        <small className="text-muted">Confidence</small>
+                        <div className="progress mt-1" style={{ height: "8px" }}>
+                          <div
+                            className={`progress-bar bg-${getRiskBadge(prediction.riskLevel)}`}
+                            style={{ width: `${prediction.confidence}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </Card>
-            );
-          })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

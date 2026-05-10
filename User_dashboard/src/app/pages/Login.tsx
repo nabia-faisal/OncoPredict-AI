@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useApp } from "../context/AppContext";
+import { registerDoctor } from "../api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -9,14 +10,27 @@ import { Stethoscope } from "lucide-react";
 export default function Login() {
   const [doctorId, setDoctorId] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (doctorId && password) {
-      login(doctorId);
+    setError("");
+    setLoading(true);
+
+    try {
+      if (isRegister) {
+        await registerDoctor(doctorId, password);
+      }
+      await login(doctorId, password);
       navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,10 +56,18 @@ export default function Login() {
               </div>
               <h2 className="text-2xl font-semibold text-slate-800">OncoPredict AI</h2>
             </div>
-            <h3 className="text-lg text-slate-600">Doctor Login</h3>
+            <h3 className="text-lg text-slate-600">
+              {isRegister ? "Create Account" : "Doctor Login"}
+            </h3>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-700">⚠️ {error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="doctorId">Doctor ID</Label>
               <Input
@@ -64,7 +86,7 @@ export default function Login() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={isRegister ? "Create a password (min 6 chars)" : "Enter your password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 rounded-lg"
@@ -74,11 +96,22 @@ export default function Login() {
 
             <Button
               type="submit"
+              disabled={loading}
               className="w-full h-12 bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 rounded-lg"
             >
-              Login
+              {loading ? (isRegister ? "Creating Account..." : "Logging in...") : (isRegister ? "Register" : "Login")}
             </Button>
           </form>
+
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => { setIsRegister(!isRegister); setError(""); }}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {isRegister ? "Already have an account? Login" : "New doctor? Register here"}
+            </button>
+          </div>
 
           <div className="mt-6 pt-6 border-t border-slate-200">
             <p className="text-xs text-slate-500 text-center">

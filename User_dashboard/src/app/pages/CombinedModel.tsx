@@ -10,7 +10,7 @@ import { predictMultimodal } from "../api";
 
 export default function CombinedModel() {
   const navigate = useNavigate();
-  const { addPrediction, setCurrentPrediction, patientHistory } = useApp();
+  const { addPrediction, patientHistory } = useApp();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +67,6 @@ export default function CombinedModel() {
         confidenceNum > 40 ? "Moderate" : "Low";
 
       const prediction = {
-        id: Date.now().toString(),
         date: new Date().toLocaleDateString(),
         type: "Combined" as const,
         patientName: patientHistory?.patientName || "Unknown",
@@ -76,8 +75,7 @@ export default function CombinedModel() {
         riskLevel: riskLevel as "Low" | "Moderate" | "High",
       };
 
-      addPrediction(prediction);
-      setCurrentPrediction(prediction);
+      await addPrediction(prediction);
       navigate("/dashboard/result");
     } catch (err: any) {
       setError(err.message || "Something went wrong. Is the backend running?");

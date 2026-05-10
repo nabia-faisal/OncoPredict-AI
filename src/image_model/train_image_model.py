@@ -8,11 +8,6 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from src.image_model.config import IMAGE_SIZE, BATCH_SIZE, EPOCHS, MODEL_PATH
 
-# =========================
-# DATA GENERATORS
-# Train/val split from data/images/ only
-# data/test_images/ is never touched here
-# =========================
 
 train_datagen = ImageDataGenerator(
     rescale=1./255,
@@ -47,9 +42,6 @@ val_generator = train_datagen.flow_from_directory(
 print(f"Training samples  : {train_generator.samples}")
 print(f"Validation samples: {val_generator.samples}")
 
-# =========================
-# MODEL — MobileNetV2 transfer learning
-# =========================
 
 base_model = tensorflow.keras.applications.MobileNetV2(
     weights="imagenet",
@@ -72,9 +64,6 @@ model.compile(
     metrics=["accuracy"]
 )
 
-# =========================
-# CLASS WEIGHTS (handles imbalance)
-# =========================
 
 total       = len(train_generator.classes)
 n_cancer    = int(np.sum(train_generator.classes == 1))
@@ -87,9 +76,6 @@ class_weights = {
 
 print(f"Class weights: {class_weights}")
 
-# =========================
-# TRAIN
-# =========================
 
 model.fit(
     train_generator,
@@ -98,18 +84,11 @@ model.fit(
     class_weight=class_weights
 )
 
-# =========================
-# SAVE MODEL
-# =========================
 
 os.makedirs("models", exist_ok=True)
 model.save(MODEL_PATH)
 print("\nModel saved to:", MODEL_PATH)
 
-# =========================
-# EVALUATE ON HELD-OUT TEST SET
-# (data/test_images/ — images model has NEVER seen)
-# =========================
 
 test_datagen = ImageDataGenerator(rescale=1./255)
 

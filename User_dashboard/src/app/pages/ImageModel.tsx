@@ -8,7 +8,7 @@ import { predictImage } from "../api";
 
 export default function ImageModel() {
   const navigate = useNavigate();
-  const { addPrediction, setCurrentPrediction, patientHistory } = useApp();
+  const { addPrediction, patientHistory } = useApp();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,6 @@ export default function ImageModel() {
         confidencePercent > 40 ? "Moderate" : "Low";
 
       const prediction = {
-        id: Date.now().toString(),
         date: new Date().toLocaleDateString(),
         type: "Image" as const,
         patientName: patientHistory?.patientName || "Unknown",
@@ -49,8 +48,7 @@ export default function ImageModel() {
         riskLevel: riskLevel as "Low" | "Moderate" | "High",
       };
 
-      addPrediction(prediction);
-      setCurrentPrediction(prediction);
+      await addPrediction(prediction);
       navigate("/dashboard/result");
     } catch (err: any) {
       setError(err.message || "Something went wrong. Is the backend running?");
