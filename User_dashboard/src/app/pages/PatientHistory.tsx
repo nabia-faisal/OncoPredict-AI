@@ -7,7 +7,7 @@ import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
 import { Card } from "../components/ui/card";
-import { ArrowLeft, ClipboardList } from "lucide-react";
+import { ArrowLeft, ClipboardList, Zap } from "lucide-react";
 
 export default function PatientHistory() {
   const navigate = useNavigate();
@@ -39,6 +39,37 @@ export default function PatientHistory() {
     diet: "",
   });
 
+  const autofillDemo = () => {
+    const height = 165;
+    const weight = 68;
+    const bmi = (weight / ((height / 100) * (height / 100))).toFixed(2);
+    setFormData({
+      patientName: "Helen Troy",
+      age: "46-55",
+      contact: "+923001234567",
+      bodyTemperature: "98-99",
+      bloodPressureSystolic: "120",
+      bloodPressureDiastolic: "80",
+      heartRate: "60-80",
+      height: String(height),
+      weight: String(weight),
+      bmi,
+      chiefComplaint: "breast-lump",
+      allergiesDrug: false,
+      allergiesFood: false,
+      allergiesEnvironmental: false,
+      allergyDetails: "",
+      onsetDuration: "3-6-months",
+      severity: "moderate",
+      pastMedicalHistory: "hypertension",
+      pastSurgicalHistory: "biopsy",
+      familyMedicalHistory: "breast-cancer",
+      smoking: "never",
+      alcohol: "occasional",
+      diet: "balanced",
+    });
+  };
+
   const calculateBMI = () => {
     const heightM = parseFloat(formData.height) / 100;
     const weightKg = parseFloat(formData.weight);
@@ -65,14 +96,25 @@ export default function PatientHistory() {
       </div>
 
       <Card className="p-8 bg-white border-slate-200">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-teal-100 rounded-xl flex items-center justify-center">
-            <ClipboardList className="w-6 h-6 text-blue-600" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-teal-100 rounded-xl flex items-center justify-center">
+              <ClipboardList className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">Pre-Diagnosis Assessment</h2>
+              <p className="text-sm text-slate-600">Complete patient information before prediction</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800">Pre-Diagnosis Assessment</h2>
-            <p className="text-sm text-slate-600">Complete patient information before prediction</p>
-          </div>
+          <Button
+            type="button"
+            onClick={autofillDemo}
+            variant="outline"
+            className="rounded-lg border-teal-400 text-teal-600 hover:bg-teal-50"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Autofill Demo Data
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -285,33 +327,23 @@ export default function PatientHistory() {
                     checked={formData.allergiesDrug}
                     onCheckedChange={(checked) => setFormData({ ...formData, allergiesDrug: checked as boolean })}
                   />
-                  <Label htmlFor="allergiesDrug" className="cursor-pointer">
-                    Drug Allergies
-                  </Label>
+                  <Label htmlFor="allergiesDrug" className="cursor-pointer">Drug Allergies</Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="allergiesFood"
                     checked={formData.allergiesFood}
                     onCheckedChange={(checked) => setFormData({ ...formData, allergiesFood: checked as boolean })}
                   />
-                  <Label htmlFor="allergiesFood" className="cursor-pointer">
-                    Food Allergies
-                  </Label>
+                  <Label htmlFor="allergiesFood" className="cursor-pointer">Food Allergies</Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="allergiesEnvironmental"
                     checked={formData.allergiesEnvironmental}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, allergiesEnvironmental: checked as boolean })
-                    }
+                    onCheckedChange={(checked) => setFormData({ ...formData, allergiesEnvironmental: checked as boolean })}
                   />
-                  <Label htmlFor="allergiesEnvironmental" className="cursor-pointer">
-                    Environmental Allergies
-                  </Label>
+                  <Label htmlFor="allergiesEnvironmental" className="cursor-pointer">Environmental Allergies</Label>
                 </div>
               </div>
 
@@ -487,7 +519,11 @@ export default function PatientHistory() {
 
               <div className="space-y-2">
                 <Label>Diet *</Label>
-                <Select value={formData.diet} onValueChange={(value) => setFormData({ ...formData, diet: value })} required>
+                <Select
+                  value={formData.diet}
+                  onValueChange={(value) => setFormData({ ...formData, diet: value })}
+                  required
+                >
                   <SelectTrigger className="rounded-lg">
                     <SelectValue placeholder="Select option" />
                   </SelectTrigger>
